@@ -80,7 +80,7 @@ private
       end
 
       def set_puppet_options(machine)
-        puppet = machine.config.vm.provisioners.first.config
+        puppet = machine.config.vm.provisioners.last.config
         puppet.options  << '--verbose' if @options[:verbose]
         puppet.options  << '--debug' if @options[:debug]
         puppet.facter.merge!('environment' => @options[:environment])
