@@ -1,0 +1,10 @@
+---
+en:
+  vagrant:
+    puppet_plugin:
+      commands:
+        identify:
+          starting: |-
+            Starting node '%{hostname}' on ipaddress '%{ipaddress}'.
+          need_ip_and_name: |-
+            We need a hostname and an ipaddress as parameters
