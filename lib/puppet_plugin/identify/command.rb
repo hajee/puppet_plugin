@@ -69,7 +69,11 @@ module Puppet
           set_name_and_ip(machine)
           set_puppet_options(machine)
           set_shell_command(machine)
-          machine.action(:up, @options)
+          if machine.state.id == :running
+            machine.action(:provision, @options)
+          else
+            machine.action(:up, @options)
+          end
         end
       end
 
@@ -80,7 +84,7 @@ private
       end
 
       def set_puppet_options(machine)
-        puppet = machine.config.vm.provisioners.first.config
+        puppet = machine.config.vm.provisioners.last.config
         puppet.options  << '--verbose' if @options[:verbose]
         puppet.options  << '--debug' if @options[:debug]
         puppet.facter.merge!('environment' => @options[:environment])
