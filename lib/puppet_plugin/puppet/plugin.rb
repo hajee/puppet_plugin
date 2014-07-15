@@ -1,5 +1,5 @@
 module Puppet
-  module CommandIdentify
+  module CommandPuppet
     class Plugin < Vagrant.plugin("2")
       name "Load a known puppet node and apply the it"
       description <<-DESC
