@@ -14,16 +14,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", "3048"]
-    vb.customize ["modifyvm", :id, "--name", "db"]
+    # vb.customize ["modifyvm", :id, "--name", "db"]
     vb.customize ["modifyvm", :id, "--cpus", "2"]
     vb.customize ["modifyvm", :id, "--ioapic", "on"]
   end
 
-  config.vm.provision :puppet do |puppet|
+  config.vm.provision :shell, :inline => '', :id => 1
+
+  config.vm.provision :puppet, :id => 2 do |puppet|
     puppet.module_path       = "puppet/modules"
     puppet.manifests_path    = "puppet/manifests"
     puppet.manifest_file     = "site.pp"
-    # puppet.options           = "--verbose  --parser future"
+    puppet.options           = "--parser future"
     puppet.facter = {
       'environment' => 'obeheer1',
       'vm_type'     => 'vagrant'

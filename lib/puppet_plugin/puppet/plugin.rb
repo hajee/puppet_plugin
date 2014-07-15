@@ -1,12 +1,12 @@
 module Puppet
   module CommandIdentify
     class Plugin < Vagrant.plugin("2")
-      name "Identify as a known puppet node"
+      name "Load a known puppet node and apply the it"
       description <<-DESC
-      Boot as the specified node.
+      Boot as the specified node and run puppet on it.
       DESC
 
-      command("identify") do
+      command("puppet") do
         require_relative "command"
         Command
       end

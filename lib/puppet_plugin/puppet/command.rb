@@ -11,12 +11,12 @@ module Puppet
         @options[:transport]   = 'vagrant'
 
         opts = OptionParser.new do |o|
-          o.banner = "Usage: vagrant identify [options] [name]"
+          o.banner = "Usage: vagrant puppet [options] [name]"
           o.separator ""
           o.separator "Options:"
           o.separator ""
 
-          o.on("--[no-]debug",
+          o.on("--[no-]puppet-debug",
                "Run puppet with --debug (default to false)") do |debug|
             @options[:debug] = debug
           end
@@ -52,14 +52,14 @@ module Puppet
         end
         # Parse the options
         argv = parse_options(opts)
-        if argv.size < 2
-          @env.ui.info(I18n.t("vagrant.puppet_plugin.commands.identify.need_ip_and_name"))
+        if argv && argv.size == 2
+          @hostname  = argv[0]
+          @ipaddress = argv[1]
+        else
+          @env.ui.error(I18n.t("vagrant.puppet_plugin.commands.identify.need_ip_and_name"))
           return 1
         end
 
-        @hostname  = argv[0]
-        @ipaddress = argv[1]
- 
         @env.ui.info(I18n.t(
           "vagrant.puppet_plugin.commands.identify.starting",
           hostname: @hostname,
@@ -67,8 +67,8 @@ module Puppet
 
         with_target_vms('default', provider: @options[:provider]) do |machine|
           set_name_and_ip(machine)
-          set_puppet_options(machine)
           set_shell_command(machine)
+          set_puppet_options(machine)
           if machine.state.id == :running
             machine.action(:provision, @options)
           else
@@ -84,20 +84,25 @@ private
       end
 
       def set_puppet_options(machine)
-        puppet = machine.config.vm.provisioners.last.config
-        puppet.options  << '--verbose' if @options[:verbose]
-        puppet.options  << '--debug' if @options[:debug]
-        puppet.facter.merge!('environment' => @options[:environment])
-        puppet.facter.merge!('transport' => @options[:transport])
+        provider = provider_with_id(2, machine)
+        provider.options  << ' --verbose ' if @options[:verbose]
+        provider.options  << ' --debug ' if @options[:debug]
+        provider.facter.merge!('environment' => @options[:environment])
+        provider.facter.merge!('transport' => @options[:transport])
       end
 
       def set_shell_command(machine)
         host_alias = @hostname.split('.').first
-        machine.config.vm.provision(:shell) # Add a shell provider
+        provider = provider_with_id(1, machine)
+        command = "puppet apply -e \"host {'#{@hostname}': ip => '#{@ipaddress}', host_aliases => ['#{host_alias}']} host {'localhost': ip=>  '127.0.0.1', host_aliases => 'localhost.localdomain,localhost4,localhost4.localdomain4' }\""
+        provider.inline = command # Add a shell provider
         shell = machine.config.vm.provisioners.last.config
-        shell.inline = "puppet apply -e \"host {'#{@hostname}': ip => #{@ipaddress}, host_aliases => ['${host_alias}']} host {'localhost': ip=>  '127.0.0.1', host_aliases => 'localhost.localdomain,localhost4,localhost4.localdomain4' }\""
-        shell.path = nil
-        shell.args = nil
+        shell.finalize!
+      end
+
+      def provider_with_id(id, machine)
+        id = id.to_s
+        machine.config.vm.provisioners.select {|p| p.id == id}.first.config
       end
 
     end
